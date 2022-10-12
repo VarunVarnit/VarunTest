@@ -6,8 +6,7 @@
 trigger:
 - main
 
-pool:
-  vmImage: ubuntu-latest
+pool: AzureVMAgent
 strategy:
   matrix:
     Python27:
@@ -33,4 +32,11 @@ steps:
 - script: |
     pip install pytest pytest-azurepipelines
     pytest
+    from azure.identity import DefaultAzureCredential
+    import pyodbc, struct
+    credential = DefaultAzureCredential(managed_identity_client_id='e6108a97-5efa-41ae-8f00-7cafebcd8c0c') # user-assigned identity
+    token = credential.get_token("https://database.windows.net/.default").token.encode("UTF-16-LE")
+    token_struct = struct.pack(f'<I{len(token)}s', len(token), token)
+    SQL_COPT_SS_ACCESS_TOKEN = 1256
+    connString = f"Driver={{ODBC Driver 17 for SQL Server}};SERVER=varun-database.database.windows.net;DATABASE=varun-database"
   displayName: 'pytest'
